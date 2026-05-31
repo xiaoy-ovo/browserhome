@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Edge 启动页</title>
+<style>
+:root {
+  --glass-bg: rgba(255,255,255,0.12);
+  --glass-border: rgba(255,255,255,0.25);
+  --glass-shadow: 0 8px 32px rgba(0,0,0,0.15);
+  --text-primary: #fff;
+  --text-secondary: rgba(255,255,255,0.8);
+  --accent: rgba(255,255,255,0.3);
+  --btn-hover: rgba(255,255,255,0.2);
+  --input-bg: rgba(255,255,255,0.15);
+  --overlay: rgba(0,0,0,0.3);
+  --card-bg: rgba(255,255,255,0.1);
+}
+[data-theme="light"] {
+  --glass-bg: rgba(255,255,255,0.5);
+  --glass-border: rgba(255,255,255,0.6);
+  --glass-shadow: 0 8px 32px rgba(0,0,0,0.08);
+  --text-primary: #1a1a2e;
+  --text-secondary: rgba(0,0,0,0.65);
+  --accent: rgba(0,0,0,0.12);
+  --btn-hover: rgba(0,0,0,0.06);
+  --input-bg: rgba(255,255,255,0.6);
+  --overlay: rgba(255,255,255,0.3);
+  --card-bg: rgba(255,255,255,0.45);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+body {
+  font-family: 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+  min-height:100vh; display:flex; flex-direction:column;
+  align-items:center; justify-content:center;
+  background:#1a1a2e center/cover no-repeat fixed;
+  transition:background 1s ease;
+  overflow-x:hidden;
+}
+body::before {
+  content:''; position:fixed; inset:0;
+  background: var(--overlay);
+  z-index:0;
+}
+
+/* 背景图层 */
+.bg-layer {
+  position:fixed; inset:0; z-index:-1;
+  background: center/cover no-repeat;
+  transition:opacity 1.2s ease;
+}
+.bg-layer.fade { opacity:0; }
+
+/* 顶部栏 */
+.top-bar {
+  position:fixed; top:20px; right:24px;
+  display:flex; align-items:center; gap:12px; z-index:10;
+}
+.weather-widget, .btn-icon {
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:16px; padding:10px 16px;
+  color:var(--text-primary); font-size:14px;
+  display:flex; align-items:center; gap:8px;
+  box-shadow:var(--glass-shadow);
+  transition:all 0.3s ease;
+  cursor:pointer; white-space:nowrap;
+  text-decoration:none;
+}
+.btn-icon {
+  width:42px; height:42px; padding:0; justify-content:center;
+  border-radius:50%; font-size:18px;
+}
+.btn-icon:hover, .weather-widget:hover {
+  background:var(--btn-hover); transform:translateY(-2px);
+}
+.weather-widget { cursor:default; }
+.weather-widget .temp { font-size:20px; font-weight:600; }
+.weather-widget .city { font-size:12px; opacity:0.8; }
+
+/* 主容器 */
+.main-container {
+  position:relative; z-index:1;
+  display:flex; flex-direction:column;
+  align-items:center; gap:24px;
+  width:100%; max-width:700px; padding:0 24px;
+}
+
+/* 时钟 */
+.clock {
+  font-size:96px; font-weight:200; letter-spacing:4px;
+  color:var(--text-primary);
+  text-shadow:0 4px 20px rgba(0,0,0,0.2);
+  line-height:1; user-select:none;
+}
+.date-text {
+  font-size:18px; color:var(--text-secondary);
+  letter-spacing:2px; margin-top:4px;
+}
+
+/* 名言 */
+.quote-card {
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:20px; padding:16px 24px;
+  color:var(--text-primary); font-size:15px;
+  text-align:center; max-width:600px;
+  box-shadow:var(--glass-shadow);
+  line-height:1.6; font-style:italic;
+  transition:all 0.4s ease;
+}
+.quote-card .author { font-size:13px; opacity:0.7; margin-top:8px; font-style:normal; }
+
+/* 搜索框 */
+.search-wrapper {
+  width:100%; max-width:600px; position:relative;
+}
+.search-box {
+  display:flex; align-items:center;
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:28px; padding:6px 8px 6px 24px;
+  box-shadow:var(--glass-shadow);
+  transition:all 0.3s ease;
+}
+.search-box:focus-within {
+  background:var(--btn-hover);
+  box-shadow:0 12px 40px rgba(0,0,0,0.2);
+  transform:translateY(-2px);
+}
+.search-box input {
+  flex:1; border:none; outline:none; background:none;
+  font-size:18px; color:var(--text-primary); padding:10px 0;
+  min-width:0;
+}
+.search-box input::placeholder { color:var(--text-secondary); }
+.search-box .engine-select {
+  display:flex; align-items:center; gap:4px;
+  padding:6px 8px; border-radius:20px;
+  background:var(--accent); border:none;
+  color:var(--text-primary); font-size:14px; cursor:pointer;
+  white-space:nowrap; margin-right:4px;
+  transition:all 0.2s;
+}
+.search-box .engine-select:hover { background:var(--btn-hover); }
+.search-box .search-btn {
+  width:44px; height:44px; border-radius:50%;
+  border:none; background:var(--accent);
+  color:var(--text-primary); font-size:18px; cursor:pointer;
+  display:flex; align-items:center; justify-content:center;
+  transition:all 0.2s; flex-shrink:0;
+}
+.search-box .search-btn:hover { background:var(--btn-hover); transform:scale(1.05); }
+
+/* 快捷链接 */
+.links-section {
+  width:100%; max-width:650px; margin-top:8px;
+}
+.links-header {
+  display:flex; align-items:center; justify-content:space-between;
+  margin-bottom:12px; padding:0 8px;
+}
+.links-title {
+  color:var(--text-primary); font-size:13px;
+  opacity:0.7; letter-spacing:1px;
+}
+.links-grid {
+  display:grid; grid-template-columns:repeat(auto-fill,minmax(80px,1fr));
+  gap:10px;
+}
+.link-item {
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding:14px 10px; border-radius:18px; cursor:pointer;
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  box-shadow:var(--glass-shadow);
+  transition:all 0.3s ease;
+  position:relative; user-select:none;
+  text-decoration:none; color:var(--text-primary);
+}
+.link-item:hover { background:var(--btn-hover); transform:translateY(-3px); }
+.link-item.dragging { opacity:0.5; transform:scale(0.95); }
+.link-item.drag-over { border:2px dashed var(--text-primary); }
+.link-item .link-icon {
+  width:44px; height:44px; border-radius:12px;
+  background:var(--accent);
+  display:flex; align-items:center; justify-content:center;
+  font-size:20px; flex-shrink:0;
+}
+.link-item .link-icon img { width:24px; height:24px; border-radius:4px; }
+.link-item .link-name {
+  font-size:12px; text-align:center;
+  overflow:hidden; text-overflow:ellipsis;
+  white-space:nowrap; max-width:100%;
+}
+.link-item .link-del {
+  position:absolute; top:4px; right:4px;
+  width:20px; height:20px; border-radius:50%;
+  background:rgba(255,0,0,0.6); color:#fff;
+  border:none; font-size:12px; cursor:pointer;
+  display:none; align-items:center; justify-content:center;
+  line-height:1;
+}
+.link-item:hover .link-del { display:flex; }
+.link-item .link-del:hover { background:rgba(255,0,0,0.9); }
+
+.add-link-btn {
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  gap:6px; padding:14px 10px; border-radius:18px; cursor:pointer;
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  background:var(--glass-bg);
+  border:1px dashed var(--glass-border);
+  color:var(--text-secondary); font-size:24px;
+  transition:all 0.3s ease; min-height:100px;
+}
+.add-link-btn:hover { background:var(--btn-hover); border-style:solid; }
+.add-link-btn span { font-size:12px; }
+
+/* 底部刷新按钮 */
+.bottom-bar {
+  position:fixed; bottom:24px; left:50%; transform:translateX(-50%);
+  display:flex; gap:10px; z-index:10;
+}
+.bottom-bar .btn-bottom {
+  backdrop-filter:blur(20px); -webkit-backdrop-filter:blur(20px);
+  background:var(--glass-bg);
+  border:1px solid var(--glass-border);
+  border-radius:24px; padding:10px 18px;
+  color:var(--text-primary); font-size:13px; cursor:pointer;
+  box-shadow:var(--glass-shadow);
+  transition:all 0.3s ease;
+  display:flex; align-items:center; gap:6px;
+}
+.bottom-bar .btn-bottom:hover { background:var(--btn-hover); transform:translateY(-2px); }
+
+/* 弹窗 */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.5);
+  z-index:100; display:flex; align-items:center; justify-content:center;
+  backdrop-filter:blur(4px);
+}
+.modal-overlay.hidden { display:none; }
+.modal {
+  backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);
+  background:var(--card-bg);
+  border:1px solid var(--glass-border);
+  border-radius:24px; padding:28px; width:90%; max-width:420px;
+  box-shadow:0 20px 60px rgba(0,0,0,0.3);
+  color:var(--text-primary);
+}
+.modal h3 { margin-bottom:20px; font-size:20px; }
+.modal label { display:block; font-size:13px; opacity:0.7; margin-bottom:6px; }
+.modal input {
+  width:100%; padding:12px 16px; border-radius:12px;
+  border:1px solid var(--glass-border);
+  background:var(--input-bg); color:var(--text-primary);
+  font-size:15px; outline:none; margin-bottom:16px;
+  transition:all 0.2s;
+}
+.modal input:focus { border-color:var(--text-primary); }
+.modal .modal-btns { display:flex; gap:10px; justify-content:flex-end; }
+.modal .modal-btns button {
+  padding:10px 24px; border-radius:12px; border:none;
+  font-size:14px; cursor:pointer; transition:all 0.2s;
+}
+.modal .btn-save { background:#4f8cff; color:#fff; }
+.modal .btn-save:hover { background:#3a6fd8; }
+.modal .btn-cancel { background:var(--accent); color:var(--text-primary); }
+.modal .btn-cancel:hover { background:var(--btn-hover); }
+
+/* 设置面板 */
+.settings-grid {
+  display:flex; flex-direction:column; gap:12px;
+}
+.settings-row {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 0;
+}
+.settings-row span { font-size:15px; }
+.toggle-switch {
+  width:48px; height:28px; border-radius:14px;
+  background:var(--accent); cursor:pointer; position:relative;
+  transition:all 0.3s; border:none;
+}
+.toggle-switch::after {
+  content:''; position:absolute; top:3px; left:3px;
+  width:22px; height:22px; border-radius:50%;
+  background:#fff; transition:all 0.3s;
+}
+.toggle-switch.on { background:#4f8cff; }
+.toggle-switch.on::after { left:23px; }
+
+/* 响应式 */
+@media (max-width:600px) {
+  .clock { font-size:56px; }
+  .search-box input { font-size:16px; }
+  .links-grid { grid-template-columns:repeat(auto-fill,minmax(70px,1fr)); }
+  .top-bar { top:10px; right:10px; gap:6px; }
+  .weather-widget { padding:8px 12px; font-size:12px; }
+}
+</style>
+</head>
+<body>
+
+<div class="bg-layer" id="bgLayer"></div>
+
+<!-- 顶部栏 -->
+<div class="top-bar">
+  <div class="weather-widget" id="weatherWidget" title="点击刷新天气">
+    <span id="weatherIcon">☀️</span>
+    <span class="temp" id="weatherTemp">--°</span>
+    <span class="city" id="weatherCity">加载中</span>
+  </div>
+  <button class="btn-icon" id="btnRefreshBg" title="切换背景">🖼️</button>
+  <button class="btn-icon" id="btnSettings" title="设置">⚙️</button>
+</div>
+
+<!-- 主容器 -->
+<div class="main-container">
+  <div>
+    <div class="clock" id="clock">00:00</div>
+    <div class="date-text" id="dateText">----年--月--日 星期-</div>
+  </div>
+
+  <div class="quote-card" id="quoteCard">
+    <div id="quoteText"></div>
+    <div class="author" id="quoteAuthor"></div>
+  </div>
+
+  <div class="search-wrapper">
+    <div class="search-box">
+      <select class="engine-select" id="engineSelect">
+        <option value="bing">🔍 Bing</option>
+        <option value="baidu">百度</option>
+        <option value="google">Google</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="搜索点什么吧..." autofocus>
+      <button class="search-btn" id="searchBtn">→</button>
+    </div>
+  </div>
+
+  <div class="links-section">
+    <div class="links-header">
+      <span class="links-title">🔗 快捷链接</span>
+      <span style="font-size:11px;opacity:0.5;color:var(--text-secondary)">拖拽排序 · 悬停删除</span>
+    </div>
+    <div class="links-grid" id="linksGrid"></div>
+  </div>
+</div>
+
+<!-- 底部按钮 -->
+<div class="bottom-bar">
+  <button class="btn-bottom" id="btnNewQuote">💬 换一句</button>
+  <button class="btn-bottom" id="btnAddLink">➕ 添加快捷方式</button>
+</div>
+
+<!-- 添加/编辑链接弹窗 -->
+<div class="modal-overlay hidden" id="linkModalOverlay">
+  <div class="modal">
+    <h3 id="linkModalTitle">添加快捷方式</h3>
+    <label>名称</label>
+    <input type="text" id="linkNameInput" placeholder="例如：GitHub">
+    <label>网址</label>
+    <input type="text" id="linkUrlInput" placeholder="https://...">
+    <input type="hidden" id="linkEditIndex" value="-1">
+    <div class="modal-btns">
+      <button class="btn-cancel" id="btnLinkCancel">取消</button>
+      <button class="btn-save" id="btnLinkSave">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 设置弹窗 -->
+<div class="modal-overlay hidden" id="settingsOverlay">
+  <div class="modal">
+    <h3>⚙️ 设置</h3>
+    <div class="settings-grid">
+      <div class="settings-row">
+        <span>🌙 深色主题</span>
+        <button class="toggle-switch on" id="themeToggle"></button>
+      </div>
+      <div class="settings-row">
+        <span>🔄 背景自动切换</span>
+        <button class="toggle-switch" id="autoBgToggle"></button>
+      </div>
+      <div class="settings-row">
+        <span>📌 背景切换间隔</span>
+        <select id="bgInterval" style="padding:6px 12px;border-radius:8px;background:var(--input-bg);color:var(--text-primary);border:1px solid var(--glass-border);font-size:13px;">
+          <option value="0">关闭</option>
+          <option value="30">30 秒</option>
+          <option value="60">1 分钟</option>
+          <option value="300" selected>5 分钟</option>
+          <option value="900">15 分钟</option>
+          <option value="1800">30 分钟</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-btns" style="margin-top:16px;">
+      <button class="btn-save" id="btnSettingsClose">完成</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ 数据存储 ============
+const LS = {
+  get(k, d) { try { const v = localStorage.getItem('edge_start_'+k); return v ? JSON.parse(v) : d; } catch(e) { return d; } },
+  set(k, v) { localStorage.setItem('edge_start_'+k, JSON.stringify(v)); }
+};
+
+// ============ 名言库 ============
+const QUOTES = [
+  { text:'生活不止眼前的苟且，还有诗和远方的田野。', author:'高晓松' },
+  { text:'世界上只有一种真正的英雄主义，那就是在认清生活真相后依然热爱生活。', author:'罗曼·罗兰' },
+  { text:'人生如逆旅，我亦是行人。', author:'苏轼' },
+  { text:'活着就是为了改变世界，难道还有其他原因吗？', author:'乔布斯' },
+  { text:'要么旅行，要么读书，身体和灵魂必须有一个在路上。', author:'《罗马假日》' },
+  { text:'每一个不曾起舞的日子，都是对生命的辜负。', author:'尼采' },
+  { text:'人生最重要的不是所站的位置，而是所朝的方向。', author:'奥斯特洛夫斯基' },
+  { text:'不乱于心，不困于情，不畏将来，不念过往。', author:'丰子恺' },
+  { text:'一个人知道自己为什么而活，就可以忍受任何一种生活。', author:'尼采' },
+  { text:'种一棵树最好的时间是十年前，其次是现在。', author:'非洲谚语' },
+  { text:'人生没有白走的路，每一步都算数。', author:'佚名' },
+  { text:'愿你有前进一寸的勇气，亦有后退一尺的从容。', author:'佚名' },
+  { text:'万物皆有裂痕，那是光照进来的地方。', author:'莱昂纳德·科恩' },
+  { text:'且视他人之疑目如盏盏鬼火，大胆地去走你的夜路。', author:'史铁生' },
+  { text:'你所浪费的今天，是昨天死去的人奢望的明天。', author:'哈佛校训' },
+];
+
+// ============ Unsplash 背景图 ============
+// 精选 Unsplash 高清壁纸，无需 API key
+const BG_POOL = [
+  'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=85',
+  'https://images.unsplash.com/photo-1469474968028-56623f02e42e?w=1920&q=85',
+  'https://images.unsplash.com/photo-1441974231531-c6227db76b6e?w=1920&q=85',
+  'https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=1920&q=85',
+  'https://images.unsplash.com/photo-1472214103451-9374bd1c798e?w=1920&q=85',
+  'https://images.unsplash.com/photo-1501854140801-50d01698950b?w=1920&q=85',
+  'https://images.unsplash.com/photo-1447752875215-b2761acb3c5d?w=1920&q=85',
+  'https://images.unsplash.com/photo-1433086966358-54859d0ed716?w=1920&q=85',
+  'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=1920&q=85',
+  'https://images.unsplash.com/photo-1518837695005-2083093ee35b?w=1920&q=85',
+  'https://images.unsplash.com/photo-1497436072909-60f360e1d4b1?w=1920&q=85',
+  'https://images.unsplash.com/photo-1426604966848-d7adac402bff?w=1920&q=85',
+  'https://images.unsplash.com/photo-1586348943529-beaae6c28db9?w=1920&q=85',
+  'https://images.unsplash.com/photo-1504198453319-5ce911bafcde?w=1920&q=85',
+  'https://images.unsplash.com/photo-1532274402911-5a369e4c4bb5?w=1920&q=85',
+  'https://images.unsplash.com/photo-1519681393784-d120267933ba?w=1920&q=85',
+  'https://images.unsplash.com/photo-1470770903676-69b98201ea1c?w=1920&q=85',
+  'https://images.unsplash.com/photo-1494500764479-0c8f2919a3d8?w=1920&q=85',
+];
+
+function getRandomBgUrl() {
+  return BG_POOL[Math.floor(Math.random() * BG_POOL.length)];
+}
+
+// ============ 全局状态 ============
+let settings = LS.get('settings', {
+  theme: 'dark',
+  engine: 'bing',
+  autoBg: true,
+  bgInterval: 300
+});
+let links = LS.get('links', [
+  { name:'GitHub', url:'https://github.com' },
+  { name:'B站', url:'https://bilibili.com' },
+  { name:'知乎', url:'https://zhihu.com' },
+  { name:'YouTube', url:'https://youtube.com' },
+  { name:'Gmail', url:'https://mail.google.com' },
+  { name:'Stack Overflow', url:'https://stackoverflow.com' },
+]);
+let dragIndex = -1;
+
+// ============ DOM 引用 ============
+const $ = (s) => document.querySelector(s);
+const $$ = (s) => document.querySelectorAll(s);
+
+const bgLayer = $('#bgLayer');
+const clockEl = $('#clock');
+const dateEl = $('#dateText');
+const quoteText = $('#quoteText');
+const quoteAuthor = $('#quoteAuthor');
+const searchInput = $('#searchInput');
+const searchBtn = $('#searchBtn');
+const engineSelect = $('#engineSelect');
+const linksGrid = $('#linksGrid');
+const weatherIcon = $('#weatherIcon');
+const weatherTemp = $('#weatherTemp');
+const weatherCity = $('#weatherCity');
+const weatherWidget = $('#weatherWidget');
+
+// ============ 主题 ============
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', settings.theme);
+  const toggle = $('#themeToggle');
+  toggle.classList.toggle('on', settings.theme === 'dark');
+}
+$('#themeToggle').addEventListener('click', () => {
+  settings.theme = settings.theme === 'dark' ? 'light' : 'dark';
+  applyTheme(); saveSettings();
+});
+
+// ============ 时钟 ============
+function updateClock() {
+  const now = new Date();
+  clockEl.textContent = now.toLocaleTimeString('zh-CN', { hour12:false });
+  const weekdays = ['日','一','二','三','四','五','六'];
+  dateEl.textContent =
+    `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 星期${weekdays[now.getDay()]}`;
+}
+updateClock(); setInterval(updateClock, 1000);
+
+// ============ 名言 ============
+function showRandomQuote() {
+  const q = QUOTES[Math.floor(Math.random() * QUOTES.length)];
+  quoteText.textContent = `"${q.text}"`;
+  quoteAuthor.textContent = `—— ${q.author}`;
+  // 动画
+  const card = $('#quoteCard');
+  card.style.opacity = '0';
+  card.style.transform = 'translateY(10px)';
+  requestAnimationFrame(() => {
+    card.style.transition = 'all 0.4s ease';
+    card.style.opacity = '1';
+    card.style.transform = 'translateY(0)';
+  });
+}
+$('#btnNewQuote').addEventListener('click', showRandomQuote);
+showRandomQuote();
+
+// ============ 搜索 ============
+const SEARCH_URLS = {
+  bing: 'https://www.bing.com/search?q=',
+  baidu: 'https://www.baidu.com/s?wd=',
+  google: 'https://www.google.com/search?q='
+};
+
+function doSearch() {
+  const q = searchInput.value.trim();
+  if (!q) return;
+  const engine = engineSelect.value;
+  window.location.href = SEARCH_URLS[engine] + encodeURIComponent(q);
+}
+
+searchBtn.addEventListener('click', doSearch);
+searchInput.addEventListener('keydown', (e) => {
+  if (e.key === 'Enter') doSearch();
+});
+
+// 加载搜索引擎设置
+engineSelect.value = settings.engine;
+engineSelect.addEventListener('change', () => {
+  settings.engine = engineSelect.value;
+  saveSettings();
+});
+
+// ============ 快捷链接 ============
+function renderLinks() {
+  linksGrid.innerHTML = '';
+  links.forEach((link, i) => {
+    const el = document.createElement('a');
+    el.className = 'link-item';
+    el.href = link.url;
+    el.draggable = true;
+    el.dataset.index = i;
+
+    const icon = document.createElement('div');
+    icon.className = 'link-icon';
+    // 尝试用网站favicon
+    try { const u = new URL(link.url); icon.innerHTML = `<img src="https://www.google.com/s2/favicons?domain=${u.hostname}&sz=32" onerror="this.parentElement.textContent='🔗'">`; }
+    catch(e) { icon.textContent = '🔗'; }
+
+    const name = document.createElement('span');
+    name.className = 'link-name';
+    name.textContent = link.name;
+
+    const del = document.createElement('button');
+    del.className = 'link-del';
+    del.textContent = '×';
+    del.addEventListener('click', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      links.splice(i, 1);
+      saveLinks(); renderLinks();
+    });
+
+    // 拖拽事件
+    el.addEventListener('dragstart', (e) => {
+      dragIndex = i;
+      el.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', i);
+    });
+    el.addEventListener('dragend', () => {
+      el.classList.remove('dragging');
+      $$('.link-item').forEach(l => l.classList.remove('drag-over'));
+      dragIndex = -1;
+    });
+    el.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      if (dragIndex !== i) el.classList.add('drag-over');
+    });
+    el.addEventListener('dragleave', () => el.classList.remove('drag-over'));
+    el.addEventListener('drop', (e) => {
+      e.preventDefault();
+      el.classList.remove('drag-over');
+      const from = dragIndex;
+      const to = i;
+      if (from !== to && from !== -1) {
+        const [item] = links.splice(from, 1);
+        links.splice(to, 0, item);
+        saveLinks(); renderLinks();
+      }
+    });
+
+    el.appendChild(icon);
+    el.appendChild(name);
+    el.appendChild(del);
+    linksGrid.appendChild(el);
+  });
+
+  // 添加按钮
+  const addBtn = document.createElement('div');
+  addBtn.className = 'add-link-btn';
+  addBtn.innerHTML = '+<span>添加</span>';
+  addBtn.addEventListener('click', openAddLinkModal);
+  linksGrid.appendChild(addBtn);
+}
+
+function saveLinks() { LS.set('links', links); }
+
+// ============ 添加链接弹窗 ============
+const linkModalOverlay = $('#linkModalOverlay');
+const linkNameInput = $('#linkNameInput');
+const linkUrlInput = $('#linkUrlInput');
+const linkEditIndex = $('#linkEditIndex');
+
+function openAddLinkModal() {
+  $('#linkModalTitle').textContent = '添加快捷方式';
+  linkNameInput.value = '';
+  linkUrlInput.value = '';
+  linkEditIndex.value = '-1';
+  linkModalOverlay.classList.remove('hidden');
+  linkNameInput.focus();
+}
+
+$('#btnAddLink').addEventListener('click', openAddLinkModal);
+
+$('#btnLinkCancel').addEventListener('click', () => {
+  linkModalOverlay.classList.add('hidden');
+});
+
+$('#btnLinkSave').addEventListener('click', () => {
+  const name = linkNameInput.value.trim();
+  let url = linkUrlInput.value.trim();
+  if (!name || !url) return;
+  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+  const idx = parseInt(linkEditIndex.value);
+  if (idx >= 0) {
+    links[idx] = { name, url };
+  } else {
+    links.push({ name, url });
+  }
+  saveLinks(); renderLinks();
+  linkModalOverlay.classList.add('hidden');
+});
+
+linkModalOverlay.addEventListener('click', (e) => {
+  if (e.target === linkModalOverlay) linkModalOverlay.classList.add('hidden');
+});
+
+// ============ 设置弹窗 ============
+function saveSettings() { LS.set('settings', settings); }
+
+$('#btnSettings').addEventListener('click', () => {
+  $('#themeToggle').classList.toggle('on', settings.theme === 'dark');
+  $('#autoBgToggle').classList.toggle('on', settings.autoBg);
+  $('#bgInterval').value = settings.bgInterval;
+  $('#settingsOverlay').classList.remove('hidden');
+});
+
+$('#btnSettingsClose').addEventListener('click', () => {
+  settings.autoBg = $('#autoBgToggle').classList.contains('on');
+  settings.bgInterval = parseInt($('#bgInterval').value);
+  saveSettings();
+  setupBgTimer();
+  $('#settingsOverlay').classList.add('hidden');
+});
+
+$('#autoBgToggle').addEventListener('click', function() {
+  this.classList.toggle('on');
+});
+
+$('#settingsOverlay').addEventListener('click', (e) => {
+  if (e.target === $('#settingsOverlay')) $('#settingsOverlay').classList.add('hidden');
+});
+
+// ============ 背景图 ============
+let bgTimer = null;
+
+function setBackground(url) {
+  const img = new Image();
+  img.onload = () => {
+    bgLayer.style.backgroundImage = `url(${url})`;
+    bgLayer.classList.remove('fade');
+    document.body.style.backgroundImage = `url(${url})`;
+    LS.set('bgUrl', url);
+  };
+  img.onerror = () => {
+    // 最终回退
+    const fb = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1920&q=85';
+    bgLayer.style.backgroundImage = `url(${fb})`;
+    bgLayer.classList.remove('fade');
+    document.body.style.backgroundImage = `url(${fb})`;
+    LS.set('bgUrl', fb);
+  };
+  img.src = url;
+}
+
+async function refreshBackground() {
+  bgLayer.classList.add('fade');
+  const url = getRandomBgUrl();
+  setTimeout(() => setBackground(url), 600);
+}
+
+function setupBgTimer() {
+  if (bgTimer) clearInterval(bgTimer);
+  if (settings.autoBg && settings.bgInterval > 0) {
+    bgTimer = setInterval(refreshBackground, settings.bgInterval * 1000);
+  }
+}
+
+$('#btnRefreshBg').addEventListener('click', refreshBackground);
+
+// 初始加载背景
+(async function initBg() {
+  const savedBg = LS.get('bgUrl', null);
+  if (savedBg) {
+    setBackground(savedBg);
+  } else {
+    await refreshBackground();
+  }
+})();
+
+setupBgTimer();
+
+// ============ 天气 ============
+const WEATHER_ICONS = {
+  0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️',
+  45: '🌫️', 48: '🌫️',
+  51: '🌦️', 53: '🌦️', 55: '🌧️',
+  61: '🌧️', 63: '🌧️', 65: '🌧️',
+  71: '🌨️', 73: '🌨️', 75: '🌨️',
+  80: '🌦️', 81: '🌧️', 82: '⛈️',
+  85: '🌨️', 86: '🌨️',
+  95: '⛈️', 96: '⛈️', 99: '⛈️',
+};
+
+async function fetchWeather(lat, lon) {
+  try {
+    const resp = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&timezone=auto`);
+    const data = await resp.json();
+    const w = data.current_weather;
+    weatherTemp.textContent = `${Math.round(w.temperature)}°C`;
+    weatherIcon.textContent = WEATHER_ICONS[w.weathercode] || '🌡️';
+  } catch(e) {
+    weatherTemp.textContent = '--°';
+    weatherIcon.textContent = '❓';
+  }
+}
+
+async function getCityName(lat, lon) {
+  try {
+    const resp = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json&accept-language=zh`);
+    const data = await resp.json();
+    const addr = data.address || {};
+    weatherCity.textContent = addr.city || addr.town || addr.county || addr.state || '当前位置';
+  } catch(e) {
+    weatherCity.textContent = '当前位置';
+  }
+}
+
+function initWeather() {
+  if (!navigator.geolocation) {
+    weatherCity.textContent = '无法定位';
+    weatherTemp.textContent = '--°';
+    return;
+  }
+  navigator.geolocation.getCurrentPosition(
+    (pos) => {
+      const { latitude, longitude } = pos.coords;
+      fetchWeather(latitude, longitude);
+      getCityName(latitude, longitude);
+    },
+    () => {
+      weatherCity.textContent = '定位被拒';
+      weatherTemp.textContent = '--°';
+    },
+    { timeout: 10000 }
+  );
+}
+
+weatherWidget.addEventListener('click', () => initWeather());
+initWeather();
+
+// ============ 初始化 ============
+applyTheme();
+renderLinks();
+$('#autoBgToggle').classList.toggle('on', settings.autoBg);
+
+// 键盘快捷键
+document.addEventListener('keydown', (e) => {
+  // Ctrl+K 或 / 聚焦搜索框
+  if ((e.ctrlKey && e.key === 'k') || (e.key === '/' && document.activeElement === document.body)) {
+    e.preventDefault();
+    searchInput.focus();
+    searchInput.select();
+  }
+  // Escape 关闭弹窗
+  if (e.key === 'Escape') {
+    linkModalOverlay.classList.add('hidden');
+    $('#settingsOverlay').classList.add('hidden');
+  }
+});
+</script>
+</body>
+</html>
